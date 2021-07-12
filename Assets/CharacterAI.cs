@@ -8,7 +8,7 @@ public class CharacterAI : MonoBehaviour
     public Transform targetTransform;
     public Target targetScript;
     public Player playerScript;
-    public Animator animator;
+    private Animator animator;
     public NavMeshAgent agent;
     public LayerMask whatIsGround, whatIsTarget;
 
@@ -30,6 +30,7 @@ public class CharacterAI : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {     
+      animator = GetComponent<Animator>();
       agent = GetComponent<NavMeshAgent>();
       FindNewTarget();
     }
