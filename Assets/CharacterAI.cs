@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
 
-public class AI : MonoBehaviour
+public class CharacterAI : MonoBehaviour
 {
     public string targetTag;
     public GameObject target;
