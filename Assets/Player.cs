@@ -15,7 +15,6 @@ public class Player : MonoBehaviour
 
     void Update() 
     {
-      CheckHealth();
     }
 
     void OnCollisionEnter (Collision collisionInfo)
@@ -26,20 +25,33 @@ public class Player : MonoBehaviour
       }
     }
 
-    public void PlayHitSound()
+    public void TakeDamage (float amount)
     {
+      Debug.Log("You got hit");
+      health -= amount;
       audio.PlayOneShot(hitSound);
+      if (health <= 0 && !dead)
+      {
+        Die();
+      }
     }
 
-    private void CheckHealth()
+    private void Die()
     {
-      if(health <= 0 && !dead)
+      dead = true;
+      DisableController();
+      audio.PlayOneShot(deathSound);
+      audio.PlayOneShot(deathSoundTwo);
+      Debug.Log("You Died");
+    }
+
+    private void DisableController() 
+    {
+      controller.enabled = false;
+      Gun[] guns = GetComponentsInChildren<Gun>();
+      foreach (Gun gun in guns)
       {
-        dead = true;
-        audio.PlayOneShot(deathSound);
-        audio.PlayOneShot(deathSoundTwo);
-        controller.enabled = false;
-        Debug.Log("You Died");
+        gun.enabled = false;
       }
     }
 }
