@@ -7,7 +7,6 @@ public class CharacterAI : MonoBehaviour
     public GameObject target;
     public Transform targetTransform;
     public Target targetScript;
-    public Player playerScript;
     private Animator animator;
     public NavMeshAgent agent;
     public LayerMask whatIsGround, whatIsTarget;
@@ -24,12 +23,13 @@ public class CharacterAI : MonoBehaviour
     public float sightRange, attackRange;
     public bool targetInSightRange, targetInAttackRange;
 
-    public AudioSource audio;
+    private AudioSource audio;
     public AudioClip[] audioClipArray;
 
     // Start is called before the first frame update
     void Start()
     {     
+      audio = GetComponent<AudioSource>();
       animator = GetComponent<Animator>();
       agent = GetComponent<NavMeshAgent>();
       FindNewTarget();
@@ -38,19 +38,13 @@ public class CharacterAI : MonoBehaviour
     void Update()
     { 
       // targetInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsTarget);
+      FindNewTarget();
       targetInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsTarget);
-      if (target == null) Patrolling();
-      if (target.name == "Player")
-      {
-        if (playerScript.dead) FindNewTarget();
-        if (targetInAttackRange) AttackTarget();
-        if (!targetInAttackRange) ChaseTarget();
-      } else
-      {
-        if (targetScript.dead) FindNewTarget();
-        if (targetInAttackRange) AttackTarget();
-        if (!targetInAttackRange) ChaseTarget();
-      }
+      if (target == null || targetScript.dead) 
+        Patrolling();
+        FindNewTarget();
+      if (targetInAttackRange) AttackTarget();
+      if (!targetInAttackRange) ChaseTarget();
     }
 
     private void SearchWalkPoint()
@@ -86,7 +80,7 @@ public class CharacterAI : MonoBehaviour
       animator.SetBool("Attacking", false);
       animator.SetBool("Walking", true);
       agent.SetDestination(targetTransform.position);
-      FindNewTarget();
+      // FindNewTarget();
     }
 
     private void AttackTarget()
@@ -120,13 +114,7 @@ public class CharacterAI : MonoBehaviour
       {
         if (hit.transform.gameObject.GetInstanceID() == target.GetInstanceID())
         {
-          if (target.name == "Player") 
-          {
-            playerScript.TakeDamage(damage);
-          } else
-          {
-            targetScript.TakeDamage(damage);
-          }
+          targetScript.TakeDamage(damage);
         }
       }
     }

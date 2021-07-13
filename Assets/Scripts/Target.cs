@@ -6,35 +6,84 @@ public class Target : MonoBehaviour
 {
     public float health;
     public bool dead;
-    public AudioSource audio;
+    public bool explodes;
+    public float force;
+    public float damage;
+    public float radius;
+    public GameObject explosionEffect;
+    private AudioSource audio;
     public AudioClip hitSound;
+    public AudioClip deathSound;
+
+    public bool isPlayer;
+    public CharacterController controller;
 
     void Start()
     {
+      audio = GetComponent<AudioSource>();
     }
     
     public void TakeDamage (float amount)
     {
-      Debug.Log("it got hit");
       health -= amount;
       audio.PlayOneShot(hitSound);
       if (health <= 0)
       {
+        
         Die();
       }
     }
 
     void Die()
     {
-      Debug.Log("it died");
+      if (isPlayer) DisableController();
+      else 
+      {
+        GetComponent<CharacterAI>().enabled = false;
+        GetComponent<Animator>().enabled = false;
+        SetRigidbodyState(false);
+      }  
+      AudioSource.PlayClipAtPoint (deathSound, transform.position);
       gameObject.layer = 10;
       gameObject.tag = "Untagged";
       dead = true;
-      GetComponent<Animator>().enabled = false;
-      GetComponent<CharacterAI>().enabled = false;
-      SetRigidbodyState(false);
-      // SetColliderState(true);
-      Destroy(gameObject, 5f);
+      if (explodes)
+      {
+        Explode();
+      } else{
+        Destroy(gameObject, 5f);
+      }
+    }
+
+    void Explode()
+    {
+      GameObject explosion = Instantiate(explosionEffect, transform.position, transform.rotation);
+        
+      Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
+
+      Destroy(gameObject);
+      Destroy(explosion, 2f);
+
+      foreach (Collider nearbyObject in colliders)
+      {
+        Rigidbody rb = nearbyObject.GetComponent<Rigidbody>();
+        Debug.Log(rb);
+        if (rb != null)
+        {
+          Debug.Log(nearbyObject.transform.root.tag);
+          rb.AddExplosionForce(force, transform.position, radius);
+        }
+      }
+    }
+
+    private void DisableController() 
+    {
+      controller.enabled = false;
+      Gun[] guns = GetComponentsInChildren<Gun>();
+      foreach (Gun gun in guns)
+      {
+        gun.enabled = false;
+      }
     }
 
     public void SetRigidbodyState(bool state)
