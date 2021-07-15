@@ -12,6 +12,9 @@ public class Gun : MonoBehaviour
 
     int bulletsLeft, bulletsShot;
 
+    private int maxDeathShots;
+    private int deathShotsTaken;
+
     // Bullet Stats
     public GameObject bullet;
     public float shootForce, upwardForce;
@@ -39,6 +42,8 @@ public class Gun : MonoBehaviour
     
     private void Start()
     {
+      maxDeathShots = Random.Range(0, 10);
+      fpsCam = GetComponent<Camera>();
       audio = GetComponent<AudioSource>();
       bulletsLeft = magazineSize;
       readyToShoot = true;
@@ -78,21 +83,34 @@ public class Gun : MonoBehaviour
       }
     }
 
-    public void EmptyRounds()
+    public void EmptyRoundsOnDeath()
     {
-      shooting = true;
-      if (readyToShoot && shooting && !reloading && bulletsLeft > 0)
+      shooting = false;
+      if (!allowButtonHold && readyToShoot) 
+      {
+        Shoot();
+        return;
+      }
+
+      if (allowButtonHold && readyToShoot && !reloading) 
       {
         bulletsShot = 0;
         Shoot();
-        shooting = false;
-        if (allowButtonHold) EmptyRounds();
+        deathShotsTaken++;
+        Debug.Log(deathShotsTaken);
       }
+
+      Invoke(nameof(EmptyRound), timeBetweenShooting);
+    }
+
+    public void EmptyRound()
+    {
+      if (maxDeathShots > deathShotsTaken) EmptyRoundsOnDeath();
     }
 
     private void Shoot()
     {
-      audio.PlayOneShot(shootSound);
+      AudioSource.PlayClipAtPoint(shootSound, transform.position);
       readyToShoot = false;
       // Find bullet arc
       Ray ray = fpsCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
@@ -145,7 +163,6 @@ public class Gun : MonoBehaviour
 
     private void ResetShot()
     {
-      playerRb.isKinematic = true;
       readyToShoot = true;
       allowInvoke = true;
     }
@@ -154,7 +171,7 @@ public class Gun : MonoBehaviour
     {
       animator.SetBool("Reloading", true);
       reloading = true;
-      audio.PlayOneShot(reloadSound);
+      AudioSource.PlayClipAtPoint(reloadSound, transform.position);
       if(individualReload)
       {
         Invoke(nameof(IndividualReload), reloadTime);
