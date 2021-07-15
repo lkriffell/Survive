@@ -41,7 +41,7 @@ public class CustomBullet : MonoBehaviour
     {
       if (explosion != null) 
       {
-        AudioSource.PlayClipAtPoint(impactSound, transform.position);
+        // AudioSource.PlayClipAtPoint(impactSound, transform.position);
         GameObject explosionEffect = Instantiate(explosion, transform.position, Quaternion.identity);
         Destroy(explosionEffect, 0.2f);
       }
@@ -49,8 +49,13 @@ public class CustomBullet : MonoBehaviour
       Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRange, whatIsEnemies);
       foreach (Collider objectHit in colliders)
       {
-        objectHit.GetComponent<Target>().TakeDamage(explosionDamage);
-        objectHit.GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, explosionRange);
+        Rigidbody rb = objectHit.GetComponent<Rigidbody>();
+        Target targetHit = objectHit.GetComponent<Target>();
+        if (targetHit != null && rb != null && !targetHit.damageApplied) 
+        {
+          rb.AddExplosionForce(explosionForce, transform.position, explosionRange);
+          targetHit.TakeDamage(explosionDamage);
+        }
       }
       Invoke(nameof(Delay), 0.05f);
     }
