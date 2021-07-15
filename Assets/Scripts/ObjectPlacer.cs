@@ -30,6 +30,7 @@ public class ObjectPlacer : MonoBehaviour
     private void PlaceObjectNear(Vector3 clickPoint)
     {
       var finalPosition = grid.GetNearestPointOnGrid(clickPoint);
+      finalPosition.y += 1.8f;
       Instantiate(objectToPlace, finalPosition, Quaternion.identity);
     }
 }
