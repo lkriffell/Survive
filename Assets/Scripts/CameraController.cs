@@ -19,9 +19,11 @@ public class CameraController : MonoBehaviour
 
     void FixedUpdate () {
       CheckState();
-      if (!inFlyMode) return;
-      Movement();
-      LookRotation();
+      if (inFlyMode) 
+      {
+        Movement();
+        LookRotation();
+      }
     }
 
     private void FlyModeOn()
