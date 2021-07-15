@@ -26,25 +26,35 @@ public class CharacterAI : MonoBehaviour
     private AudioSource audio;
     public AudioClip[] audioClipArray;
 
+    public Gun gun;
+
     // Start is called before the first frame update
     void Start()
     {     
+      gun = GetComponentInChildren<Gun>();
       audio = GetComponent<AudioSource>();
       animator = GetComponent<Animator>();
       agent = GetComponent<NavMeshAgent>();
-      FindNewTarget();
+      Patrolling();
     }
 
-    void Update()
+    void FixedUpdate()
     { 
       // targetInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsTarget);
       FindNewTarget();
       targetInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsTarget);
       if (target == null || targetScript.dead) 
+      {
         Patrolling();
         FindNewTarget();
+      }
       if (targetInAttackRange) AttackTarget();
       if (!targetInAttackRange) ChaseTarget();
+    }
+
+    private void ResetShooting()
+    {
+      gun.shooting = false;
     }
 
     private void SearchWalkPoint()
@@ -86,20 +96,28 @@ public class CharacterAI : MonoBehaviour
     private void AttackTarget()
     { 
       FindNewTarget();
-      Debug.Log("Attacking");
       agent.SetDestination(transform.position);
       if (!alreadyAttacked)
       {
         alreadyAttacked = true;
+        Invoke(nameof(ResetAttack), timeBetweenAttacks);
+        
         animator.SetBool("Walking", false);
         animator.SetBool("Attacking", true);
-        Invoke(nameof(ResetAttack), timeBetweenAttacks);
         Invoke(nameof(ResetAnimator), 1f);
-
-        transform.LookAt(targetTransform);
-        HitDetection();
-        audio.clip = audioClipArray[Random.Range(0, audioClipArray.Length - 1)];
-        audio.PlayOneShot(audio.clip);
+        transform.LookAt(targetTransform, Vector3.up);
+        if (gun != null)
+        {
+          gun.shooting = true;
+          if (gun.allowButtonHold) Invoke(nameof(ResetShooting), 2f);
+          else Invoke(nameof(ResetShooting), 0.1f);
+        } else
+        {
+          HitDetection();
+          audio.clip = audioClipArray[Random.Range(0, audioClipArray.Length - 1)];
+          audio.PlayOneShot(audio.clip);
+        }
+        
       } 
     }
 
@@ -161,6 +179,5 @@ public class CharacterAI : MonoBehaviour
       target = closestEnemy;
       targetTransform = target.GetComponent<Transform>();
       targetScript = target.GetComponent<Target>();
-      playerScript = target.GetComponent<Player>();
     }
 }
