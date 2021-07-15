@@ -3,12 +3,12 @@
 public class FollowPlayer : MonoBehaviour
 {
 
-    public Transform player;
+    public Transform objectToFollow;
     public Vector3 offset;
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        transform.position = player.position + offset;
+        transform.position = objectToFollow.position + offset;
     }
 }
