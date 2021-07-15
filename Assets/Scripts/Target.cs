@@ -14,6 +14,7 @@ public class Target : MonoBehaviour
     private AudioSource audio;
     public AudioClip hitSound;
     public AudioClip deathSound;
+    public bool damageApplied;
 
     public bool isPlayer;
     public CharacterController controller;
@@ -26,32 +27,42 @@ public class Target : MonoBehaviour
     public void TakeDamage (float amount)
     {
       health -= amount;
+      damageApplied = true;
+      Invoke(nameof(ResetDamageApplied), 0.05f);
       audio.PlayOneShot(hitSound);
-      if (health <= 0)
+      if (health <= 0 && !dead)
       {
-        
         Die();
       }
     }
 
+    private void ResetDamageApplied()
+    {
+      damageApplied = false;
+    }
+
     void Die()
     {
+      SetRigidbodyState(false);
+
+      AudioSource.PlayClipAtPoint(deathSound, transform.position);
+      gameObject.layer = 10;
+      gameObject.tag = "Untagged";
+      dead = true;
+
+      DropWeapons();
       if (isPlayer) DisableController();
       else 
       {
         GetComponent<CharacterAI>().enabled = false;
         GetComponent<Animator>().enabled = false;
-        SetRigidbodyState(false);
       }  
-      AudioSource.PlayClipAtPoint (deathSound, transform.position);
-      gameObject.layer = 10;
-      gameObject.tag = "Untagged";
-      dead = true;
+      
       if (explodes)
       {
         Explode();
       } else{
-        Destroy(gameObject, 5f);
+        if (!isPlayer) Destroy(gameObject, 5f);
       }
     }
 
@@ -64,25 +75,32 @@ public class Target : MonoBehaviour
       Destroy(gameObject);
       Destroy(explosion, 2f);
 
-      foreach (Collider nearbyObject in colliders)
+      foreach (Collider objectHit in colliders)
       {
-        Rigidbody rb = nearbyObject.GetComponent<Rigidbody>();
-        Debug.Log(rb);
-        if (rb != null)
-        {
-          Debug.Log(nearbyObject.transform.root.tag);
-          rb.AddExplosionForce(force, transform.position, radius);
-        }
+        Rigidbody rb = objectHit.GetComponent<Rigidbody>();
+        Target targetHit = objectHit.GetComponent<Target>();
+        if (targetHit != null && rb != null && !targetHit.damageApplied) rb.AddExplosionForce(force, transform.position, radius);
+        if (targetHit != null && !targetHit.damageApplied) targetHit.TakeDamage(damage);
       }
     }
 
     private void DisableController() 
     {
       controller.enabled = false;
+    }
+
+    private void DropWeapons() 
+    {
       Gun[] guns = GetComponentsInChildren<Gun>();
       foreach (Gun gun in guns)
       {
-        gun.enabled = false;
+        Rigidbody gunRb = gun.GetComponent<Rigidbody>();
+        gunRb.AddForce(transform.forward * Random.Range(0, 30), ForceMode.Impulse);
+        gunRb.AddTorque(transform.up * Random.Range(0, 30) * Random.Range(0, 50));
+        gun.transform.parent = null;
+        gun.EmptyRoundsOnDeath();
+        Destroy(gun, 20f);
+        // gun.enabled = false;
       }
     }
 
