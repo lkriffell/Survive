@@ -7,6 +7,8 @@ public class Wander : IState
     private readonly NavMeshAgent _navMeshAgent;
 
     private Vector3 walkPoint;
+    public float TimeStuck;
+    private Vector3 _lastPosition;
 
     private float wanderDistance = 20f;
 
@@ -17,6 +19,7 @@ public class Wander : IState
     }
     public void OnEnter() 
     { 
+      TimeStuck = 0f;
       _navMeshAgent.enabled = true;
       walkPoint = _laborer.transform.position;
     }
@@ -27,6 +30,11 @@ public class Wander : IState
         SearchWalkPoint();
         _navMeshAgent.SetDestination(walkPoint);
       }
+
+      if (Vector3.Distance(_laborer.transform.position, _lastPosition) <= 0f)
+            TimeStuck += Time.deltaTime;
+
+        _lastPosition = _laborer.transform.position;
     }
 
     public void OnExit() 

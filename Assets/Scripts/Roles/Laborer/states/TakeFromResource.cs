@@ -14,13 +14,16 @@ public class TakeFromResource : IState
     }
     public void Tick() 
     { 
-      if (_laborer.Target != null)
+      if (_laborer.ResourceTarget != null)
       {
-        _laborer.TakeFromTarget();
+        _laborer.TakeFromResource();
+        _laborer.SetMostResource();
       }
     }
 
     public void OnExit() 
     {
+      _laborer.SetMostResource();
+      _laborer.ResourceTarget = null;
     }
 }

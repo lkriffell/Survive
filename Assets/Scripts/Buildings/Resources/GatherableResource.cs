@@ -16,7 +16,7 @@ public class GatherableResource : MonoBehaviour
 
     void Update ()
     {
-
+      if (pickedUp == true) gameObject.SetActive(false);
     }
 
     public bool Take()
