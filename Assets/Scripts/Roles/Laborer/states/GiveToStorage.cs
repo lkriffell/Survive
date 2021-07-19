@@ -24,6 +24,7 @@ public class GiveToStorage : IState
 
     public void OnExit() 
     {
+      _laborer.giveToStorage = false;
       _laborer.SetMostResource();
     }
 }
