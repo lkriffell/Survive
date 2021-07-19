@@ -13,8 +13,8 @@ public class FindStorage : IState
     public void OnEnter() 
     {
       isFound = false;
+      _laborer.giveToStorage = true;
       _laborer.SetMostResource();
-      // if (_laborer._resourceToDeliver == null) _laborer._resourceToDeliver = "Wood";
       Storage storage = FindCorrectStorage();
       if (storage != null) 
       {
