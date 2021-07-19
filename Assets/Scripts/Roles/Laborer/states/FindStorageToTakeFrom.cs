@@ -43,7 +43,7 @@ public class FindStorageToTakeFrom : IState
     private void PickResourceToTake(int index)
     {
       _laborer._resourceToTake = _laborer.BuildSiteTarget._buildPrerequisites.Keys.ElementAt(index);
-      if (_laborer.BuildSiteTarget._buildPrerequisites.Values.ElementAt(index) >= _laborer._maxCarry) _laborer._amountToTake = _laborer._maxCarry;
+      if (_laborer.BuildSiteTarget._buildPrerequisites.Values.ElementAt(index) >= _laborer.Citizen.maxCarry) _laborer._amountToTake = _laborer.Citizen.maxCarry;
       else _laborer._amountToTake = _laborer.BuildSiteTarget._buildPrerequisites.Values.ElementAt(index);
     }
     private Storage FindCorrectStorage()

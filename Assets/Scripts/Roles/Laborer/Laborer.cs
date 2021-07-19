@@ -9,20 +9,17 @@ public class Laborer : MonoBehaviour
     public bool takeFromStorage;
     public bool giveToStorage;
     private StateMachine _stateMachine;
-
-    public int _maxCarry = 20;
-    public float _carryingNow;
     public float _lastSearch = 0f;
     public string _resourceToDeliver = "";
     public string _resourceToTake = "";
     public int _amountToTake;
-    public Dictionary<String, int> _inventory = new Dictionary<String, int>(){{"Wood", 0}, {"Stone", 0}};
+    public Citizen Citizen;
     public GatherableResource ResourceTarget;
     public Storage StorageTarget;
     public BuildSite BuildSiteTarget;
 
     void Awake () {
-      var navMeshAgent = GetComponent<NavMeshAgent>();
+      var navMeshAgent = Citizen.GetComponent<NavMeshAgent>();
 
       _stateMachine = new StateMachine();
 
@@ -50,17 +47,17 @@ public class Laborer : MonoBehaviour
         Func<bool> StuckForOverASecond() => () => Wander.TimeStuck >= 1;
 
       At(FindMarkedResource, Wander, InventoryEmptyAndNoResourceFound());
-        Func<bool> InventoryEmptyAndNoResourceFound() => () => !FindMarkedResource.isFound && _carryingNow <= 0;
+        Func<bool> InventoryEmptyAndNoResourceFound() => () => !FindMarkedResource.isFound && Citizen.carryingNow <= 0;
 
       At(Wander, FindBuildSite, NoResourceTargetFound());
         Func<bool> NoResourceTargetFound() => () => !FindMarkedResource.isFound && _lastSearch > 10f;
 
       At(FindBuildSite, Wander, InventoryEmptyAndNoBuildSite());
-        Func<bool> InventoryEmptyAndNoBuildSite() => () => !FindBuildSite.isFound && _carryingNow <= 0;
+        Func<bool> InventoryEmptyAndNoBuildSite() => () => !FindBuildSite.isFound && Citizen.carryingNow <= 0;
       
       // Resource
       At(FindMarkedResource, GoToMarkedResource, HasResourceTargetAndInventorySpace());
-        Func<bool> HasResourceTargetAndInventorySpace() => () => FindMarkedResource.isFound && _carryingNow / _maxCarry < .8f;
+        Func<bool> HasResourceTargetAndInventorySpace() => () => FindMarkedResource.isFound && Citizen.carryingNow / Citizen.maxCarry < .8f;
 
       At(GoToMarkedResource, FindMarkedResource, MyResourcePickedUp());
         Func<bool> MyResourcePickedUp() => () => ResourceTarget == null || (ResourceTarget != null && ResourceTarget.enabled == false);
@@ -70,33 +67,33 @@ public class Laborer : MonoBehaviour
 
       At(TakeFromResource, FindMarkedResource, NoResourceTargetAndHasInventorySpace());
         Func<bool> NoResourceTargetAndHasInventorySpace() => () => (ResourceTarget == null || ResourceTarget != null && ResourceTarget.enabled == false) && 
-        _carryingNow / _maxCarry <= .8f;
+        Citizen.carryingNow / Citizen.maxCarry <= .8f;
 
       // Storage
       At(FindMarkedResource, FindStorage, InventoryNotEmptyAndNoResourceFound());
         Func<bool> InventoryNotEmptyAndNoResourceFound() => () => (ResourceTarget == null || ResourceTarget != null && ResourceTarget.enabled == false) && 
-          _carryingNow > 0f && !FindMarkedResource.isFound;
+          Citizen.carryingNow > 0f && !FindMarkedResource.isFound;
 
       At(TakeFromResource, FindStorage, InventoryNotEmptyAndNoResourceTarget());
         Func<bool> InventoryNotEmptyAndNoResourceTarget() => () => ((ResourceTarget == null || ResourceTarget != null && ResourceTarget.enabled == false) && 
-          _carryingNow > 0f) || _carryingNow >= _maxCarry;
+          Citizen.carryingNow > 0f) || Citizen.carryingNow >= Citizen.maxCarry;
 
       At(FindStorage, Wander, NoStorageFound());
         Func<bool> NoStorageFound() => () => !FindStorage.isFound;
 
       At(FindStorage, GoToStorage, HasStorageTargetAndInventoryAndNoResourceFound());
         Func<bool> HasStorageTargetAndInventoryAndNoResourceFound() => () => (ResourceTarget == null || ResourceTarget != null && ResourceTarget.enabled == false) && 
-          StorageTarget != null && FindStorage.isFound && _carryingNow > 0f;
+          StorageTarget != null && FindStorage.isFound && Citizen.carryingNow > 0f;
       
       At(GoToStorage, GiveToStorage, NextToStorageTarget());
         Func<bool> NextToStorageTarget() => () => StorageTarget != null && Vector3.Distance(transform.position, StorageTarget.transform.position) < 3f && giveToStorage;
 
       At(GiveToStorage, FindStorage, InventoryNotEmptyAndIPlacedMyMostResourceOrStorageIsFull());
         Func<bool> InventoryNotEmptyAndIPlacedMyMostResourceOrStorageIsFull() => () => StorageTarget != null && _resourceToDeliver != null && 
-          (_inventory[_resourceToDeliver] <= 0 || StorageTarget.totalStored >= StorageTarget.storable) && _carryingNow > 0;
+          (Citizen._inventory[_resourceToDeliver] <= 0 || StorageTarget.totalStored >= StorageTarget.storable) && Citizen.carryingNow > 0;
 
       At(GiveToStorage, FindMarkedResource, InventoryEmpty());
-        Func<bool> InventoryEmpty() => () => _carryingNow <= 0;
+        Func<bool> InventoryEmpty() => () => Citizen.carryingNow <= 0;
 
       // Build Site
       At(FindBuildSite, FindStorageToTakeFrom, HasUnfulfilledBuildSiteTarget());
@@ -112,7 +109,7 @@ public class Laborer : MonoBehaviour
 
       At(TakeFromStorage, GoToBuildSite, HasBuildSiteAndEnoughResources());
         Func<bool> HasBuildSiteAndEnoughResources() => () => BuildSiteTarget != null && 
-          _inventory[_resourceToTake] >= _amountToTake;
+          Citizen._inventory[_resourceToTake] >= _amountToTake;
 
       At(GoToBuildSite, GiveToBuildSite, NextToBuildSite());
         Func<bool> NextToBuildSite() => () => BuildSiteTarget != null && Vector3.Distance(transform.position, BuildSiteTarget.transform.position) < 3f;
@@ -133,12 +130,12 @@ public class Laborer : MonoBehaviour
 
     public void SetMostResource()
     {
-      _resourceToDeliver = _inventory.FirstOrDefault(x => x.Value == _inventory.Values.Max()).Key;
+      _resourceToDeliver = Citizen._inventory.FirstOrDefault(x => x.Value == Citizen._inventory.Values.Max()).Key;
     }
 
     public bool InventoryFull()
     {
-      if (_carryingNow >= _maxCarry) return true;
+      if (Citizen.carryingNow >= Citizen.maxCarry) return true;
       else return false;
     }
 
@@ -146,9 +143,9 @@ public class Laborer : MonoBehaviour
     {
       if (!InventoryFull() && ResourceTarget.Take())
       {
-        if (_inventory.ContainsKey(ResourceTarget.resourceType)) _inventory[ResourceTarget.resourceType]++;
-        else _inventory.Add(ResourceTarget.resourceType, 1);
-        _carryingNow++;
+        if (Citizen._inventory.ContainsKey(ResourceTarget.resourceType)) Citizen._inventory[ResourceTarget.resourceType]++;
+        else Citizen._inventory.Add(ResourceTarget.resourceType, 1);
+        Citizen.carryingNow++;
       }
       else ResourceTarget = null;
     }
@@ -157,19 +154,19 @@ public class Laborer : MonoBehaviour
     {
       if (StorageTarget.Take(_resourceToTake))
       {
-        if (_inventory.ContainsKey(_resourceToTake)) _inventory[_resourceToTake]++;
-        else _inventory.Add(_resourceToTake, 1);
-        _carryingNow++;
+        if (Citizen._inventory.ContainsKey(_resourceToTake)) Citizen._inventory[_resourceToTake]++;
+        else Citizen._inventory.Add(_resourceToTake, 1);
+        Citizen.carryingNow++;
       }
       else StorageTarget = null;
     }
 
     public void GiveToStorage(String resourceType)
     {
-      if (_inventory[resourceType] > 0 && StorageTarget.Give(resourceType))
+      if (Citizen._inventory[resourceType] > 0 && StorageTarget.Give(resourceType))
       {
-        _inventory[resourceType]--;
-        _carryingNow--;
+        Citizen._inventory[resourceType]--;
+        Citizen.carryingNow--;
       }
       else StorageTarget = null;
     }
@@ -178,10 +175,10 @@ public class Laborer : MonoBehaviour
     {
       var give = BuildSiteTarget.Give(_resourceToTake);
       // Debug.Log(give);
-      if (_inventory[_resourceToTake] > 0 && give)
+      if (Citizen._inventory[_resourceToTake] > 0 && give)
       {
-        _inventory[_resourceToTake]--;
-        _carryingNow--;
+        Citizen._inventory[_resourceToTake]--;
+        Citizen.carryingNow--;
       }
       else BuildSiteTarget = null;
     }
