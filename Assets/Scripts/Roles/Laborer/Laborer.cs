@@ -6,17 +6,20 @@ using System.Linq;
 
 public class Laborer : MonoBehaviour
 {
+    public bool takeFromStorage;
+    public bool giveToStorage;
     private StateMachine _stateMachine;
 
-    private float _maxCarry = 20;
+    public int _maxCarry = 20;
     public float _carryingNow;
-    public string _resourceToDeliver = "";
-    public Dictionary<String, int> _inventory = new Dictionary<String, int>();
-
     public float _lastSearch = 0f;
-
+    public string _resourceToDeliver = "";
+    public string _resourceToTake = "";
+    public int _amountToTake;
+    public Dictionary<String, int> _inventory = new Dictionary<String, int>(){{"Wood", 0}, {"Stone", 0}};
     public GatherableResource ResourceTarget;
     public Storage StorageTarget;
+    public BuildSite BuildSiteTarget;
 
     void Awake () {
       var navMeshAgent = GetComponent<NavMeshAgent>();
@@ -35,11 +38,25 @@ public class Laborer : MonoBehaviour
       var GoToStorage = new GoToStorage(this, navMeshAgent);
       var GiveToStorage = new GiveToStorage(this);
 
+      // BuildSite
+      var FindBuildSite = new FindBuildSite(this);
+      var FindStorageToTakeFrom = new FindStorageToTakeFrom(this);
+      var TakeFromStorage = new TakeFromStorage(this);
+      var GoToBuildSite = new GoToBuildSite(this, navMeshAgent);
+      var GiveToBuildSite = new GiveToBuildSite(this);
+
+      // Wander transitions
       At(Wander, FindMarkedResource, StuckForOverASecond());
         Func<bool> StuckForOverASecond() => () => Wander.TimeStuck >= 1;
 
       At(FindMarkedResource, Wander, InventoryEmptyAndNoResourceFound());
         Func<bool> InventoryEmptyAndNoResourceFound() => () => !FindMarkedResource.isFound && _carryingNow <= 0;
+
+      At(Wander, FindBuildSite, NoResourceTargetFound());
+        Func<bool> NoResourceTargetFound() => () => !FindMarkedResource.isFound && _lastSearch > 10f;
+
+      At(FindBuildSite, Wander, InventoryEmptyAndNoBuildSite());
+        Func<bool> InventoryEmptyAndNoBuildSite() => () => !FindBuildSite.isFound && _carryingNow <= 0;
       
       // Resource
       At(FindMarkedResource, GoToMarkedResource, HasResourceTargetAndInventorySpace());
@@ -72,7 +89,7 @@ public class Laborer : MonoBehaviour
           StorageTarget != null && FindStorage.isFound && _carryingNow > 0f;
       
       At(GoToStorage, GiveToStorage, NextToStorageTarget());
-        Func<bool> NextToStorageTarget() => () => StorageTarget != null && Vector3.Distance(transform.position, StorageTarget.transform.position) < 3f;
+        Func<bool> NextToStorageTarget() => () => StorageTarget != null && Vector3.Distance(transform.position, StorageTarget.transform.position) < 3f && giveToStorage;
 
       At(GiveToStorage, FindStorage, InventoryNotEmptyAndIPlacedMyMostResourceOrStorageIsFull());
         Func<bool> InventoryNotEmptyAndIPlacedMyMostResourceOrStorageIsFull() => () => StorageTarget != null && _resourceToDeliver != null && 
@@ -80,6 +97,28 @@ public class Laborer : MonoBehaviour
 
       At(GiveToStorage, FindMarkedResource, InventoryEmpty());
         Func<bool> InventoryEmpty() => () => _carryingNow <= 0;
+
+      // Build Site
+      At(FindBuildSite, FindStorageToTakeFrom, HasUnfulfilledBuildSiteTarget());
+        Func<bool> HasUnfulfilledBuildSiteTarget() => () => BuildSiteTarget != null && BuildSiteTarget.materialsDelivered == false;
+
+      At(FindStorageToTakeFrom, GoToStorage, HasStorageTargetAndBuildSite());
+        Func<bool> HasStorageTargetAndBuildSite() => () => BuildSiteTarget != null && StorageTarget != null;
+
+      At(GoToStorage, TakeFromStorage, HasStorageTargetAndBuildSiteAndTakeIsTrueAndNextToStorage());
+        Func<bool> HasStorageTargetAndBuildSiteAndTakeIsTrueAndNextToStorage() => () => BuildSiteTarget != null && 
+          BuildSiteTarget.materialsDelivered == false && StorageTarget != null && takeFromStorage &&
+            Vector3.Distance(transform.position, StorageTarget.transform.position) < 3f;
+
+      At(TakeFromStorage, GoToBuildSite, HasBuildSiteAndEnoughResources());
+        Func<bool> HasBuildSiteAndEnoughResources() => () => BuildSiteTarget != null && 
+          _inventory[_resourceToTake] >= _amountToTake;
+
+      At(GoToBuildSite, GiveToBuildSite, NextToBuildSite());
+        Func<bool> NextToBuildSite() => () => BuildSiteTarget != null && Vector3.Distance(transform.position, BuildSiteTarget.transform.position) < 3f;
+
+      At(GiveToBuildSite, FindMarkedResource, NoBuildSite());
+        Func<bool> NoBuildSite() => () => BuildSiteTarget == null;
 
       _stateMachine.SetState(FindMarkedResource);
 
@@ -114,16 +153,16 @@ public class Laborer : MonoBehaviour
       else ResourceTarget = null;
     }
 
-    // public void TakeFromStorage(String resourceType)
-    // {
-    //   if (StorageTarget.Give(resourceType))
-    //   {
-    //     if (_inventory.ContainsKey(resourceType)) _inventory[resourceType]++;
-    //     else _inventory.Add(resourceType, 1);
-    //     _carryingNow++;
-    //   }
-    //   else StorageTarget = null;
-    // }
+    public void TakeFromStorage()
+    {
+      if (StorageTarget.Take(_resourceToTake))
+      {
+        if (_inventory.ContainsKey(_resourceToTake)) _inventory[_resourceToTake]++;
+        else _inventory.Add(_resourceToTake, 1);
+        _carryingNow++;
+      }
+      else StorageTarget = null;
+    }
 
     public void GiveToStorage(String resourceType)
     {
@@ -133,5 +172,17 @@ public class Laborer : MonoBehaviour
         _carryingNow--;
       }
       else StorageTarget = null;
+    }
+
+    public void GiveToBuildSite()
+    {
+      var give = BuildSiteTarget.Give(_resourceToTake);
+      // Debug.Log(give);
+      if (_inventory[_resourceToTake] > 0 && give)
+      {
+        _inventory[_resourceToTake]--;
+        _carryingNow--;
+      }
+      else BuildSiteTarget = null;
     }
 }
