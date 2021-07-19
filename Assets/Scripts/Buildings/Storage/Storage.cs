@@ -35,13 +35,10 @@ public class Storage : MonoBehaviour
 
     public bool Take(String resourceType) 
     {
-      if (_inventory[resourceType] > 0) 
-      {
-        _inventory[resourceType]--;
-        totalStored--;
-      }
-      if (totalStored <= 0) return false;
+      if (!_inventory.ContainsKey(resourceType) || _inventory[resourceType] <= 0) return false;
 
-      return false;
+      _inventory[resourceType]--;
+      totalStored--;
+      return true;
     }
 }
