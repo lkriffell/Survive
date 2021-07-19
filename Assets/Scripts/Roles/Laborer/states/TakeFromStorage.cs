@@ -1,30 +1,28 @@
 using UnityEngine;
 
-public class GiveToStorage : IState
+public class TakeFromStorage : IState
 {
     private readonly Laborer _laborer;
 
     private string _mostResource;
 
-    public GiveToStorage(Laborer laborer) 
+    public TakeFromStorage(Laborer laborer) 
     {
       _laborer = laborer;
     }
     public void OnEnter() 
     {
-      _laborer.SetMostResource();
     }
     public void Tick() 
     { 
       if (_laborer.StorageTarget != null)
       {
-        _laborer.GiveToStorage(_laborer._resourceToDeliver);
+        _laborer.TakeFromStorage();
       }
     }
 
     public void OnExit() 
     {
-      _laborer.giveToStorage = false;
-      _laborer.SetMostResource();
+      _laborer.takeFromStorage = false;
     }
 }

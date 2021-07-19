@@ -5,25 +5,27 @@ using UnityEngine;
 public class ObjectPlacer : MonoBehaviour
 {
     public GameObject objectToPlace;
+    private Mesh objectToPlaceMesh;
+    public Material objectPreviewMat;
     private Grid grid;
 
     void Awake()
     {
       grid = FindObjectOfType<Grid>();
+      objectToPlaceMesh = objectToPlace.GetComponent<MeshFilter>().mesh;
     }
 
     // Update is called once per frame
     void Update()
     {
-      if (Input.GetMouseButtonDown(0))
-      {
-        RaycastHit hitInfo;
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+      RaycastHit hitInfo;
+      Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        if (Physics.Raycast(ray, out hitInfo))
-        {
-            PlaceObjectNear(hitInfo.point);
-        }
+      if (Physics.Raycast(ray, out hitInfo)) Graphics.DrawMesh(objectToPlaceMesh, hitInfo.point, Quaternion.identity, objectPreviewMat, 0);
+
+      if (Input.GetMouseButtonDown(0) && Physics.Raycast(ray, out hitInfo))
+      {
+        PlaceObjectNear(hitInfo.point);
       }
     }
 

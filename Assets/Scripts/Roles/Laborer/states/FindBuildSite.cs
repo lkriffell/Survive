@@ -1,24 +1,23 @@
 using UnityEngine;
 using System.Linq;
 
-public class FindStorage : IState
+public class FindBuildSite : IState
 {
     private readonly Laborer _laborer;
     public bool isFound;
 
-    public FindStorage(Laborer laborer) 
+    public FindBuildSite(Laborer laborer) 
     {
       _laborer = laborer;
     }
     public void OnEnter() 
     {
+      _laborer._lastSearch = 0f;
       isFound = false;
-      _laborer.giveToStorage = true;
-      _laborer.SetMostResource();
-      Storage storage = FindCorrectStorage();
-      if (storage != null) 
+      BuildSite buildSite = FindActiveBuildSite();
+      if (buildSite != null) 
       {
-        _laborer.StorageTarget = storage;
+        _laborer.BuildSiteTarget = buildSite;
         isFound = true;
       }
     }
@@ -28,13 +27,14 @@ public class FindStorage : IState
 
     public void OnExit() 
     {
+      _laborer._lastSearch = 0f;
     }
 
-    private Storage FindCorrectStorage()
+    private BuildSite FindActiveBuildSite()
     {
-      return Object.FindObjectsOfType<Storage>()
+      return Object.FindObjectsOfType<BuildSite>()
              .OrderBy(t=> Vector3.Distance(_laborer.transform.position, t.transform.position))
-             .Where(t=> t.acceptedResources.Contains(_laborer._resourceToDeliver) && t.totalStored < t.storable)
+             .Where(t=> t.materialsDelivered == false)
              .Take(1)
              .FirstOrDefault();
     }
