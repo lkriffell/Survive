@@ -13,7 +13,6 @@ public class FindMarkedResource : IState
     public void OnEnter() 
     {
       isFound = false;
-      _laborer._lastSearch = 0f;
       GatherableResource resource = PickFromResourceType(5);
       if (resource == null) resource = PickFromNearest(5);
       if (resource != null) 
