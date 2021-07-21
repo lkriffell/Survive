@@ -2,27 +2,26 @@ using UnityEngine;
 
 public class GiveToBuildSite : IState
 {
-    private readonly Laborer _laborer;
+    private readonly Citizen _citizen;
 
     private string _mostResource;
 
-    public GiveToBuildSite(Laborer laborer) 
+    public GiveToBuildSite(Citizen citizen) 
     {
-      _laborer = laborer;
+      _citizen = citizen;
     }
     public void OnEnter() 
     {
     }
     public void Tick() 
     { 
-      if (_laborer.BuildSiteTarget != null)
+      if (_citizen.BuildSiteTarget != null)
       {
-        _laborer.GiveToBuildSite();
+        _citizen.GiveToBuildSite();
       }
     }
 
     public void OnExit() 
     {
-      // _laborer._resourceToTake = "";
     }
 }

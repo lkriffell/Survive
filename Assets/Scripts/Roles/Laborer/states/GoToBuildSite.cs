@@ -3,21 +3,21 @@ using UnityEngine.AI;
 
 public class GoToBuildSite : IState
 {
-    private readonly Laborer _laborer;
+    private readonly Citizen _citizen;
     private readonly NavMeshAgent _navMeshAgent;
 
     public float TimeStuck;
     private Vector3 _lastPosition;
 
-    public GoToBuildSite(Laborer laborer, NavMeshAgent navMeshAgent) 
+    public GoToBuildSite(Citizen citizen, NavMeshAgent navMeshAgent) 
     {
-      _laborer = laborer;
+      _citizen = citizen;
       _navMeshAgent = navMeshAgent;
     }
     public void OnEnter() 
     {
       _navMeshAgent.enabled = true;
-      _navMeshAgent.SetDestination(_laborer.BuildSiteTarget.transform.position);
+      _navMeshAgent.SetDestination(_citizen.BuildSiteTarget.transform.position);
   }
 
     public void Tick() 

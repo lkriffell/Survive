@@ -3,22 +3,22 @@ using System.Linq;
 
 public class FindStorage : IState
 {
-    private readonly Laborer _laborer;
+    private readonly Citizen _citizen;
     public bool isFound;
 
-    public FindStorage(Laborer laborer) 
+    public FindStorage(Citizen citizen) 
     {
-      _laborer = laborer;
+      _citizen = citizen;
     }
     public void OnEnter() 
     {
       isFound = false;
-      _laborer.giveToStorage = true;
-      _laborer.SetMostResource();
+      _citizen.giveToStorage = true;
+      _citizen.SetMostResource();
       Storage storage = FindCorrectStorage();
       if (storage != null) 
       {
-        _laborer.StorageTarget = storage;
+        _citizen.StorageTarget = storage;
         isFound = true;
       }
     }
@@ -33,8 +33,8 @@ public class FindStorage : IState
     private Storage FindCorrectStorage()
     {
       return Object.FindObjectsOfType<Storage>()
-             .OrderBy(t=> Vector3.Distance(_laborer.transform.position, t.transform.position))
-             .Where(t=> t.acceptedResources.Contains(_laborer._resourceToDeliver) && t.totalStored < t.storable)
+             .OrderBy(t=> Vector3.Distance(_citizen.transform.position, t.transform.position))
+             .Where(t=> t.acceptedResources.Contains(_citizen._resourceToDeliver) && t.totalStored < t.storable)
              .Take(1)
              .FirstOrDefault();
     }
