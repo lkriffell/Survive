@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class TakeFromResource : IState
 {
-    private readonly Laborer _laborer;
+    private readonly Citizen _citizen;
 
-    public TakeFromResource(Laborer laborer) 
+    public TakeFromResource(Citizen citizen) 
     {
-      _laborer = laborer;
+      _citizen = citizen;
     }
     public void OnEnter() 
     {
@@ -14,16 +14,16 @@ public class TakeFromResource : IState
     }
     public void Tick() 
     { 
-      if (_laborer.ResourceTarget != null)
+      if (_citizen.ResourceTarget != null)
       {
-        _laborer.TakeFromResource();
-        _laborer.SetMostResource();
+        _citizen.TakeFromResource();
+        _citizen.SetMostResource();
       }
     }
 
     public void OnExit() 
     {
-      _laborer.SetMostResource();
-      _laborer.ResourceTarget = null;
+      _citizen.SetMostResource();
+      _citizen.ResourceTarget = null;
     }
 }

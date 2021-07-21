@@ -3,23 +3,23 @@ using System.Linq;
 
 public class FindStorageToTakeFrom : IState
 {
-    private readonly Laborer _laborer;
+    private readonly Citizen _citizen;
     public bool isFound;
 
-    public FindStorageToTakeFrom(Laborer laborer) 
+    public FindStorageToTakeFrom(Citizen citizen) 
     {
-      _laborer = laborer;
+      _citizen = citizen;
     }
     public void OnEnter() 
     {
       isFound = false;
-      _laborer.takeFromStorage = true;
+      _citizen.takeFromStorage = true;
       
-      foreach(int num in Enumerable.Range(0, _laborer.BuildSiteTarget._buildPrerequisites.Count))
+      foreach(int num in Enumerable.Range(0, _citizen.BuildSiteTarget._buildPrerequisites.Count))
       {
         PickResourceToTake(num);
       // Check if build site still needs this resource
-        if (_laborer.BuildSiteTarget._inventory.ContainsKey(_laborer._resourceToTake) && _laborer.BuildSiteTarget._inventory[_laborer._resourceToTake] < _laborer.BuildSiteTarget._buildPrerequisites[_laborer._resourceToTake])
+        if (_citizen.BuildSiteTarget._inventory.ContainsKey(_citizen._resourceToTake) && _citizen.BuildSiteTarget._inventory[_citizen._resourceToTake] < _citizen.BuildSiteTarget._buildPrerequisites[_citizen._resourceToTake])
         {
           break;
         }
@@ -28,7 +28,7 @@ public class FindStorageToTakeFrom : IState
       Storage storage = FindCorrectStorage();
       if (storage != null) 
       {
-        _laborer.StorageTarget = storage;
+        _citizen.StorageTarget = storage;
         isFound = true;
       }
     }
@@ -42,15 +42,15 @@ public class FindStorageToTakeFrom : IState
 
     private void PickResourceToTake(int index)
     {
-      _laborer._resourceToTake = _laborer.BuildSiteTarget._buildPrerequisites.Keys.ElementAt(index);
-      if (_laborer.BuildSiteTarget._buildPrerequisites.Values.ElementAt(index) >= _laborer._maxCarry) _laborer._amountToTake = _laborer._maxCarry;
-      else _laborer._amountToTake = _laborer.BuildSiteTarget._buildPrerequisites.Values.ElementAt(index);
+      _citizen._resourceToTake = _citizen.BuildSiteTarget._buildPrerequisites.Keys.ElementAt(index);
+      if (_citizen.BuildSiteTarget._buildPrerequisites.Values.ElementAt(index) >= _citizen.maxCarry) _citizen._amountToTake = _citizen.maxCarry;
+      else _citizen._amountToTake = _citizen.BuildSiteTarget._buildPrerequisites.Values.ElementAt(index);
     }
     private Storage FindCorrectStorage()
     {
       return Object.FindObjectsOfType<Storage>()
-             .OrderBy(t=> Vector3.Distance(_laborer.transform.position, t.transform.position))
-             .Where(t=> t.acceptedResources.Contains(_laborer._resourceToTake) && t._inventory[_laborer._resourceToTake] > 0)
+             .OrderBy(t=> Vector3.Distance(_citizen.transform.position, t.transform.position))
+             .Where(t=> t.acceptedResources.Contains(_citizen._resourceToTake) && t._inventory[_citizen._resourceToTake] > 0)
              .Take(1)
              .FirstOrDefault();
     }
