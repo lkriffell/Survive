@@ -25,11 +25,12 @@ public class StateMachine
   public void SetState(IState state)
   {
     if (state == _currentState) return;
+    Debug.Log(state);
 
     _currentState?.OnExit();
     _currentState = state;
 
-// Get list of transitions and set list to empty if null so further iteration points to empty list
+// Get list of transitions, if null set list to empty so further iteration points to empty list
     _transitions.TryGetValue(_currentState.GetType(), out _currentTransitions);
     if (_currentTransitions == null) _currentTransitions = _emptyTransitions;
 
@@ -45,6 +46,12 @@ public class StateMachine
     }
     transitions.Add(new Transition(to, predicate));
   }
+
+  public void AddAnyTransition(IState state, Func<bool> predicate)
+   {
+      _anyTransitions.Add(new Transition(state, predicate));
+   }
+
 
   private class Transition{
     public Func<bool> Condition {get;}
